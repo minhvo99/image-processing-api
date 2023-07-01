@@ -3,36 +3,40 @@ import express from "express";
 import path from "path";
 class ImageController {
     async fullImage(req: express.Request, res: express.Response) {
+        try {
+            const filename = req.query.filename as unknown as string;
+            const height = parseInt(req.query.height as unknown as string);
+            const width = parseInt(req.query.width as unknown as string);
 
-        const { filename, width, height } = req.query;        
+            if (!filename) {
+                return res.status(404).send(`<h3>Missing filename parameter</h3>`);
+            }
 
-        if (!filename) {
-            return res.status(404).send( "<h3>Missing filename parameter</h3>" );
+            let image = sharp(path.resolve(`assets/full/${filename}.jpg`));
+            let origianlImage = sharp(path.resolve(`assets/full/${filename}.jpg`));
+            const metadata = await image.metadata();
+            const originalWidth = metadata.width;
+            const originalHeight = metadata.height;
+
+            let imageUrl = `http://${req.headers.host}/api/images?filename=${filename}`;
+            let originalImageUrl = `http://${req.headers.host}/api/images?filename=${filename}`;
+
+            if (width && height) {
+                image = image.resize(Number(width), Number(height));
+                imageUrl += `&width=${width}&height=${height}`;
+            }
+            res.setHeader("Content-Type", "image/jpg");
+            image.pipe(res);
+
+            if (!width && !height) {
+                origianlImage = origianlImage.resize(Number(originalWidth), Number(originalHeight));
+                originalImageUrl += `&width=${originalWidth}&height=${originalHeight}`;
+            }
+            res.setHeader("Content-Type", "image/jpg");
+            origianlImage.pipe(res);
+        } catch (error) {
+            res.send(`An error occurred: ${error}`);
         }
-
-        let image = sharp(path.resolve(`assets/full/${filename}.jpg`));
-        let origianlImage = sharp(path.resolve(`assets/full/${filename}.jpg`));
-        const metadata = await image.metadata();
-        const originalWidth = metadata.width;
-        const originalHeight = metadata.height;
-
-        let imageUrl = `http://${req.headers.host}/api/images?filename=${filename}`;
-        let originalImageUrl = `http://${req.headers.host}/api/images?filename=${filename}`;
-
-        if (width && height) {
-            image = image.resize(Number(width), Number(height));
-            imageUrl += `&width=${width}&height=${height}`;
-        }
-        res.setHeader("Content-Type", "image/jpg");
-        image.pipe(res);
-
-        if (!width && !height) {
-            origianlImage = origianlImage.resize(Number(originalWidth), Number(originalHeight));
-            originalImageUrl += `&width=${originalWidth}&height=${originalHeight}`;
-        }
-        res.setHeader("Content-Type", "image/jpg");
-        origianlImage.pipe(res);
-       
     }
 
     home(req: express.Request, res: express.Response) {
