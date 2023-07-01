@@ -5,6 +5,7 @@
     "main": "index.js",
     "scripts": {
         "test": "npm run build && npm run jasmine",
+        "jasmine":"jasmine",
         "build": "npx tsc",
         "start:dev": "nodemon --inspect build/index.js",
         "start": "nodemon src/index.ts",
